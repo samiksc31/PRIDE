@@ -1,0 +1,9 @@
+Setup & Requirements
+Install Ollama: Download and install Ollama on your machine.
+
+Pull a Model: Open your terminal and pull a coding model so LION has a brain locally:
+
+ollama pull codellama(Or ollama pull llama3 if you prefer).
+
+Run LION:
+python lion.py
