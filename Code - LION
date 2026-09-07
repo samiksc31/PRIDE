@@ -1,0 +1,105 @@
+import subprocess
+import sys
+import urllib.request
+import json
+
+# Configuration for local Ollama instance
+OLLAMA_URL = "http://localhost:11434/api/generate"
+MODEL_NAME = "codellama"  # You can change this to "llama3" if preferred
+
+def query_lion(prompt, system_prompt=""):
+    """Sends a prompt to the local Ollama instance."""
+    data = {
+        "model": MODEL_NAME,
+        "prompt": prompt,
+        "system": system_prompt,
+        "stream": False
+    }
+    
+    req = urllib.request.Request(
+        OLLAMA_URL,
+        data=json.dumps(data).encode('utf-8'),
+        headers={'Content-Type': 'application/json'}
+    )
+    
+    try:
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode('utf-8'))
+            return result.get("response", "No response generated.")
+    except Exception as e:
+        return f"[Error connecting to local Ollama instance: {e}. Make sure Ollama is running.]"
+
+def run_command(command):
+    """Safely executes a shell command and returns the output."""
+    try:
+        result = subprocess.run(
+            command, 
+            shell=True, 
+            capture_output=True, 
+            text=True, 
+            timeout=30
+        )
+        output = result.stdout if result.returncode == 0 else result.stderr
+        return output.strip()
+    except Exception as e:
+        return f"Execution error: {e}"
+
+def main():
+    print("🦁 LION Bot Initialized for PRIDE Repository (Local / No API Key)")
+    print(f"Using local model: {MODEL_NAME} via Ollama\n")
+    print("Commands:")
+    print("  code <prompt>   - Generate Python code")
+    print("  fix <code/error>- Fix Python syntax errors")
+    print("  run <command>   - Execute a terminal command")
+    print("  exit            - Quit LION\n")
+
+    system_prompt = (
+        "You are LION, an expert local AI assistant specialized in Python code generation, "
+        "syntax fixing, and terminal workflows for the PRIDE repository. Be concise, accurate, and direct."
+    )
+
+    while True:
+        try:
+            user_input = input("PRIDE/LION> ").strip()
+            if not user_input:
+                continue
+            
+            if user_input.lower() == "exit":
+                print("LION signing off.")
+                break
+            
+            parts = user_input.split(" ", 1)
+            action = parts[0].lower()
+            arg = parts[1] if len(parts) > 1 else ""
+
+            if action == "code":
+                print("\n[LION Generating Python Code...]")
+                prompt = f"Write clean, efficient Python code for: {arg}"
+                response = query_lion(prompt, system_prompt)
+                print(f"\n{response}\n")
+
+            elif action == "fix":
+                print("\n[LION Analyzing & Fixing Syntax...]")
+                prompt = f"Fix the syntax or errors in the following Python code/snippet:\n{arg}"
+                response = query_lion(prompt, system_prompt)
+                print(f"\n{response}\n")
+
+            elif action == "run":
+                if not arg:
+                    print("Please specify a command to run.")
+                    continue
+                print(f"\n[Executing Command: {arg}]")
+                output = run_command(arg)
+                print(f"\nOutput:\n{output}\n")
+
+            else:
+                # Default general prompt if no keyword is used
+                response = query_lion(user_input, system_prompt)
+                print(f"\n{response}\n")
+
+        except KeyboardInterrupt:
+            print("\nLION signing off.")
+            break
+
+if __name__ == "__main__":
+    main()
